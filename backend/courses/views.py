@@ -1,16 +1,12 @@
-from django.shortcuts import render
-from django.http import JsonResponse
+# backend/courses/views.py
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-# Create your views here.
+from .models import Course
+from .serializers import CourseSerializer
 
 @api_view(['GET'])
 def course_list_api(request):
-    return Response({
-        'message': 'API is working!',
-        'endpoint': '/api/v1/courses/',
-        'next_steps': 'We will add real course data next'
-    })
-
+    courses = Course.objects.all()
+    serializer = CourseSerializer(courses, many=True)
+    return Response(serializer.data)
 

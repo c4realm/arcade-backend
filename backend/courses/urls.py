@@ -1,8 +1,7 @@
+# backend/courses/urls.py
 from django.urls import path
-from .views import course_list_api
-
+from . import views
 
 urlpatterns = [
-      path('courses/', course_list_api, name='course_list_api'), 
+    path('courses/', views.course_list_api, name='course-list'),
 ]
-
