@@ -1,4 +1,3 @@
-# backend/courses/serializers.py
 from rest_framework import serializers
 from .models import Course, Video
 
@@ -15,6 +14,12 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = [
             'id', 'title', 'description', 'creator', 'creator_name',
-            'is_paid', 'price', 'is_approved', 'created_at', 'videos'
+            'is_paid', 'price', 'is_approved', 'created_at',
+            'short_description', 'level', 'category', 'tags', 'status', 'videos'
         ]
-        read_only_fields = ['creator']  # Auto-set from request.user
+        read_only_fields = ['creator']
+
+class CourseCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['title', 'description', 'is_paid', 'price']
