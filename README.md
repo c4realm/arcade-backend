@@ -4,9 +4,6 @@ Arcade is a peer-to-peer learning platform where users can create, publish, and 
 Arcade is a learning management platform built with Django that allows users to browse courses and administrators to manage educational content through a secure admin interface.
 The goal of Arcade is to provide a simple, extensible foundation for an online learning platform.
 
-## Project Status
-This repository contains the initial planning and backend setup for the Arcade capstone project.
-
 ## Features (Planned)
 - User authentication
 - Course creation and approval
