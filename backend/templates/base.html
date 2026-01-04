@@ -130,6 +130,62 @@
         
         // Check auth status on page load
         document.addEventListener('DOMContentLoaded', updateAuthButtons);
+	function updateAuthButtons() {
+        const token = localStorage.getItem('token');
+        const authButtons = document.getElementById('auth-buttons');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (token && user.username) {
+            // User is logged in
+            authButtons.innerHTML = `
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-700">Hello, ${user.username}</span>
+                    <a href="/dashboard" class="text-gray-700 hover:text-purple-600">
+                        <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </button>
+                </div>
+            `;
+        } else {
+            // User is not logged in
+            authButtons.innerHTML = `
+                <a href="/login" class="text-gray-700 hover:text-purple-600">
+                    <i class="fas fa-sign-in-alt mr-1"></i> Login
+                </a>
+                <a href="/register" class="ml-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-user-plus mr-1"></i> Sign Up
+                </a>
+            `;
+        }
+    }
+    
+    function logout() {
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+            // Call logout API
+            fetch('/api/v1/auth/logout/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${token}`
+                }
+            }).catch(() => {
+                // Continue even if API fails
+            });
+        }
+        
+        // Clear local storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Reload page
+        window.location.href = '/';
+    }
+    
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', updateAuthButtons);
     </script>
     
     {% block extra_js %}{% endblock %}

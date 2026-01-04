@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Arcade{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Dashboard Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <p class="text-gray-600">Welcome back, <span id="user-name">User</span>!</p>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                    <i class="fas fa-book text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="enrolled-courses">0</h3>
+                    <p class="text-gray-600">Enrolled Courses</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
+                    <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="completed-courses">0</h3>
+                    <p class="text-gray-600">Completed Courses</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                    <i class="fas fa-clock text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800" id="study-hours">0</h3>
+                    <p class="text-gray-600">Study Hours</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- My Courses -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">My Courses</h2>
+            <div id="my-courses">
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading your courses...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Recent Activity</h2>
+            <div id="recent-activity">
+                <div class="space-y-4">
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                            <i class="fas fa-book text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">Welcome to Arcade!</p>
+                            <p class="text-sm text-gray-600">Start by exploring courses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load user data
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('user-name').textContent = user.username || 'User';
+        
+        // Load user's courses
+        loadMyCourses();
+    });
+    
+    function loadMyCourses() {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            document.getElementById('my-courses').innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-gray-600 mb-4">Please login to see your courses</p>
+                    <a href="/login" class="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg">
+                        Login
+                    </a>
+                </div>
+            `;
+            return;
+        }
+        
+        // For now, show all courses (we'll add user-specific endpoints later)
+        fetch('/api/v1/courses/', {
+            headers: {
+                'Authorization': `Token ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(courses => {
+            const container = document.getElementById('my-courses');
+            
+            if (courses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-600 mb-4">You haven't enrolled in any courses yet</p>
+                        <a href="/courses" class="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg">
+                            Browse Courses
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show first 3 courses
+            const myCourses = courses.slice(0, 3);
+            container.innerHTML = myCourses.map(course => `
+                <div class="mb-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-800">${course.title}</h4>
+                        <span class="text-xs px-2 py-1 rounded-full ${course.is_paid ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                            ${course.is_paid ? 'Paid' : 'Free'}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">${course.short_description || course.description.substring(0, 80)}...</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">${course.creator_name}</span>
+                        <a href="/courses/${course.id}" class="text-sm text-purple-600 hover:text-purple-800">
+                            Continue →
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Update stats
+            document.getElementById('enrolled-courses').textContent = courses.length;
+            document.getElementById('completed-courses').textContent = '0'; // Placeholder
+            document.getElementById('study-hours').textContent = courses.reduce((sum, course) => sum + (course.estimated_hours || 0), 0);
+        })
+        .catch(error => {
+            console.error('Error loading courses:', error);
+        });
+    }
+</script>
+{% endblock %}

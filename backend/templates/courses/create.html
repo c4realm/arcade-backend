@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Course - Arcade{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Create New Course</h1>
+        <p class="text-gray-600">Share your knowledge with the community</p>
+    </div>
+    
+    <form id="create-course-form" class="bg-white rounded-xl shadow-lg p-8">
+        <!-- Course Basics -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Course Basics</h2>
+            
+            <div class="mb-6">
+                <label for="title" class="block text-gray-700 font-medium mb-2">Course Title *</label>
+                <input type="text" id="title" name="title" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                       placeholder="e.g., Learn Python for Beginners" required>
+                <p class="text-sm text-gray-500 mt-1">Make it descriptive and engaging</p>
+            </div>
+            
+            <div class="mb-6">
+                <label for="description" class="block text-gray-700 font-medium mb-2">Description *</label>
+                <textarea id="description" name="description" rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                          placeholder="Describe what students will learn in this course..." required></textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label for="short_description" class="block text-gray-700 font-medium mb-2">Short Description</label>
+                <textarea id="short_description" name="short_description" rows="2"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                          placeholder="Brief overview (max 200 characters)"></textarea>
+            </div>
+        </div>
+        
+        <!-- Course Details -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Course Details</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="level" class="block text-gray-700 font-medium mb-2">Level</label>
+                    <select id="level" name="level" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="all">All Levels</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="category" class="block text-gray-700 font-medium mb-2">Category</label>
+                    <select id="category" name="category" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                        <option value="">Select Category</option>
+                        <option value="programming">Programming</option>
+                        <option value="design">Design</option>
+                        <option value="business">Business</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="personal-development">Personal Development</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="tags" class="block text-gray-700 font-medium mb-2">Tags</label>
+                <input type="text" id="tags" name="tags" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                       placeholder="e.g., python, django, web-development">
+                <p class="text-sm text-gray-500 mt-1">Comma-separated keywords for search</p>
+            </div>
+            
+            <div class="mb-6">
+                <label for="estimated_hours" class="block text-gray-700 font-medium mb-2">Estimated Hours</label>
+                <input type="number" id="estimated_hours" name="estimated_hours" min="0"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                       placeholder="Total course duration in hours">
+            </div>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Pricing</h2>
+            
+            <div class="mb-6">
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="is_paid" class="h-5 w-5 text-purple-600">
+                    <label for="is_paid" class="ml-2 text-gray-700 font-medium">This is a paid course</label>
+                </div>
+                
+                <div id="price-fields" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="price" class="block text-gray-700 font-medium mb-2">Price ($)</label>
+                            <input type="number" id="price" name="price" min="0" step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                                   placeholder="0.00">
+                        </div>
+                        
+                        <div>
+                            <label for="discount_price" class="block text-gray-700 font-medium mb-2">Discount Price ($)</label>
+                            <input type="number" id="discount_price" name="discount_price" min="0" step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                                   placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Course Status</h2>
+            
+            <div class="mb-6">
+                <label for="status" class="block text-gray-700 font-medium mb-2">Initial Status</label>
+                <select id="status" name="status" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                    <option value="draft">Draft (Not visible to students)</option>
+                    <option value="published">Published (Visible to everyone)</option>
+                </select>
+                <p class="text-sm text-gray-500 mt-1">You can change this later</p>
+            </div>
+        </div>
+        
+        <!-- Submit -->
+        <div class="flex justify-end space-x-4">
+            <button type="button" onclick="window.history.back()" 
+                    class="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button type="submit" 
+                    class="px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                Create Course
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Toggle price fields based on paid checkbox
+    document.getElementById('is_paid').addEventListener('change', function() {
+        const priceFields = document.getElementById('price-fields');
+        if (this.checked) {
+            priceFields.classList.remove('hidden');
+            document.getElementById('price').required = true;
+        } else {
+            priceFields.classList.add('hidden');
+            document.getElementById('price').required = false;
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('create-course-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to create a course.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const formData = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            short_description: document.getElementById('short_description').value,
+            level: document.getElementById('level').value,
+            category: document.getElementById('category').value,
+            tags: document.getElementById('tags').value,
+            estimated_hours: parseInt(document.getElementById('estimated_hours').value) || 0,
+            status: document.getElementById('status').value,
+            is_paid: document.getElementById('is_paid').checked,
+        };
+        
+        if (formData.is_paid) {
+            formData.price = parseFloat(document.getElementById('price').value) || 0;
+            const discountPrice = document.getElementById('discount_price').value;
+            if (discountPrice) formData.discount_price = parseFloat(discountPrice);
+        }
+        
+        // Show loading
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+        submitBtn.disabled = true;
+        
+        // Send request
+        fetch('/api/v1/courses/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                return response.json().then(err => { throw err; });
+            }
+        })
+        .then(data => {
+            alert('Course created successfully!');
+            window.location.href = `/courses/${data.id}`;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMsg = error.detail || error.message || 'Failed to create course';
+            alert(`Error: ${errorMsg}`);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} - Arcade{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Course Header -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div class="md:flex">
+            <div class="md:flex-1 p-8">
+                <div class="flex items-center mb-4">
+                    <span class="inline-block px-4 py-1 rounded-full text-sm font-semibold mr-4
+                        {% if course.is_paid %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {% if course.is_paid %}${{ course.price }}{% else %}FREE{% endif %}
+                    </span>
+                    <span class="inline-block px-4 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                        {{ course.level|title }}
+                    </span>
+                    {% if course.is_featured %}
+                    <span class="ml-4 text-yellow-500">
+                        <i class="fas fa-star"></i> Featured
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ course.title }}</h1>
+                
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-user text-purple-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">{{ course.creator.username }}</p>
+                        <p class="text-sm text-gray-600">Instructor</p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 mb-6">{{ course.description }}</p>
+                
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>{{ course.estimated_hours }} hours</span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-video mr-2"></i>
+                        <span>{{ course.videos.count }} lectures</span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-users mr-2"></i>
+                        <span>{{ course.total_students }} students</span>
+                    </div>
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-star mr-2 text-yellow-500"></i>
+                        <span>{{ course.average_rating|default:"0.0" }} ({{ course.rating_count }} ratings)</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="enroll-btn" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                        <i class="fas fa-shopping-cart mr-2"></i> 
+                        {% if course.is_paid %}
+                            Enroll Now - ${{ course.price }}
+                        {% else %}
+                            Enroll for Free
+                        {% endif %}
+                    </button>
+                    <button class="bg-purple-100 text-purple-700 px-8 py-3 rounded-lg font-semibold hover:bg-purple-200 transition-colors">
+                        <i class="far fa-heart mr-2"></i> Add to Wishlist
+                    </button>
+                </div>
+            </div>
+            
+            <div class="md:w-1/3">
+                <div class="h-full bg-gray-50 p-8">
+                    <h3 class="text-xl font-bold mb-4">Course Details</h3>
+                    <ul class="space-y-3">
+                        <li class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span class="font-medium">{{ course.status|title }}</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-600">Category:</span>
+                            <span class="font-medium">{{ course.category|default:"Not specified" }}</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-600">Last Updated:</span>
+                            <span class="font-medium">{{ course.updated_at|date:"F j, Y" }}</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-600">Created:</span>
+                            <span class="font-medium">{{ course.created_at|date:"F j, Y" }}</span>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-8">
+                        <h4 class="font-bold mb-3">Tags</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in course.tag_list %}
+                            <span class="px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-sm">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column: Curriculum -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6">Course Curriculum</h2>
+                <div id="videos-container">
+                    {% if videos %}
+                        <div class="space-y-4">
+                            {% for video in videos %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                            <i class="fas fa-play text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ video.title }}</h4>
+                                            <p class="text-sm text-gray-600">{{ video.duration_minutes }} min</p>
+                                        </div>
+                                    </div>
+                                    {% if video.is_preview %}
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                        Preview
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-video-slash text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-600">No videos available yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Student Reviews</h2>
+                <div id="reviews-container">
+                    <div class="text-center py-8">
+                        <i class="fas fa-comments text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-600">No reviews yet. Be the first to review!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Instructor & More -->
+        <div class="space-y-8">
+            <!-- Instructor Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">Instructor</h3>
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                        <i class="fas fa-user text-2xl text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">{{ course.creator.username }}</h4>
+                        <p class="text-gray-600">Instructor</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">{{ course.creator.bio|default:"No bio available." }}</p>
+                <button class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                    View Profile
+                </button>
+            </div>
+
+            <!-- Similar Courses -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">Similar Courses</h3>
+                <div id="similar-courses">
+                    <div class="text-center py-4">
+                        <p class="text-gray-600">Loading similar courses...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enroll button functionality
+        const enrollBtn = document.getElementById('enroll-btn');
+        enrollBtn.addEventListener('click', function() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                alert('Please login to enroll in this course.');
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Call enroll API
+            fetch(`/api/v1/courses/${ {{ course.id }} }/enroll/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Successfully enrolled in the course!');
+                    enrollBtn.textContent = 'Go to Course';
+                    enrollBtn.onclick = function() {
+                        window.location.href = `/courses/{{ course.id }}/learn`;
+                    };
+                } else {
+                    response.json().then(data => {
+                        alert(data.error || 'Enrollment failed.');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+        
+        // Load similar courses (by same category)
+        fetch(`/api/v1/courses/?category={{ course.category }}&exclude={{ course.id }}`)
+            .then(response => response.json())
+            .then(courses => {
+                const container = document.getElementById('similar-courses');
+                if (courses.length > 0) {
+                    container.innerHTML = courses.slice(0, 3).map(course => `
+                        <div class="mb-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <h4 class="font-semibold text-gray-800 mb-1">${course.title}</h4>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm ${course.is_paid ? 'text-green-600' : 'text-blue-600'}">
+                                    ${course.is_paid ? `$${course.price}` : 'FREE'}
+                                </span>
+                                <a href="/courses/${course.id}" class="text-purple-600 text-sm font-medium">View</a>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-gray-600">No similar courses found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading similar courses:', error);
+                document.getElementById('similar-courses').innerHTML = '<p class="text-gray-600">Unable to load similar courses.</p>';
+            });
+    });
+</script>
+{% endblock %}
