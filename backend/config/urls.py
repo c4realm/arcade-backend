@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from courses import views
 
 # Import views
 from courses.views import (
@@ -30,6 +31,8 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='accounts/login.html'), name='login-html'),
     path('register/', TemplateView.as_view(template_name='accounts/register.html'), name='register-html'),
     path('dashboard/', TemplateView.as_view(template_name='accounts/dashboard.html'), name='dashboard'),
+
+    #path('courses/<int:pk>/upload-video/', views.video_upload_html, name='video-upload-html'),
 ]
 
 # For serving media files during development

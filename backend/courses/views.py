@@ -7,6 +7,11 @@ from django.views.generic import TemplateView
 from .models import Course
 from .serializers import CourseSerializer, CourseCreateSerializer
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import Video
+from .serializers import VideoSerializer
+
 # API Views
 class CourseListView(generics.ListCreateAPIView):
     """List all courses or create new course"""
@@ -65,3 +70,10 @@ def course_detail_html(request, pk):
 def create_course_html(request):
     """HTML view for creating a course"""
     return render(request, 'courses/create.html')
+
+class VideoListView(APIView):
+    def get(self, request, course_id):
+        videos = Video.objects.filter(course_id=course_id)
+        serializer = VideoSerializer(videos, many=True)
+        return Response(serializer.data)
+

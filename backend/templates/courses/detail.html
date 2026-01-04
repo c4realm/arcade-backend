@@ -105,6 +105,93 @@
             </div>
         </div>
     </div>
+<div class="mt-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Course Videos</h2>
+        {% if user.is_authenticated and user == course.creator %}
+        <a href="/courses/{{ course.id }}/upload-video/" 
+           class="inline-flex items-center bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+            <i class="fas fa-plus mr-2"></i> Add Video
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if course.videos.exists %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for video in course.videos.all %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            {% if video.thumbnail %}
+            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="w-full h-48 object-cover">
+            {% else %}
+            <div class="w-full h-48 bg-gray-800 flex items-center justify-center">
+                <i class="fas fa-video text-4xl text-gray-400"></i>
+            </div>
+            {% endif %}
+            
+            <div class="p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold text-gray-800">{{ video.title }}</h3>
+                    {% if video.is_preview %}
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Preview</span>
+                    {% endif %}
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ video.description|default:"No description" }}</p>
+                
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <span>
+                        <i class="fas fa-clock mr-1"></i>
+                        {{ video.duration_formatted|default:"N/A" }}
+                    </span>
+                    <span>{{ video.created_at|date:"M d, Y" }}</span>
+                </div>
+                
+                <button onclick="playVideo({{ video.id }})" 
+                        class="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-play mr-2"></i> Watch Video
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 bg-gray-50 rounded-lg">
+        <i class="fas fa-video-slash text-4xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600">No videos yet</h3>
+        <p class="text-gray-500 mt-2">This course doesn't have any videos yet.</p>
+        {% if user.is_authenticated and user == course.creator %}
+        <a href="/courses/{{ course.id }}/upload-video/" class="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded-lg">
+            Upload First Video
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Video Modal -->
+<div id="video-modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800"></h3>
+            <button onclick="closeVideoModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-4">
+            <div id="video-player" class="w-full aspect-video bg-black rounded-lg mb-4">
+                <!-- Video player will be inserted here -->
+            </div>
+            
+            <p id="modal-description" class="text-gray-600 mb-4"></p>
+            
+            <div class="flex justify-between text-sm text-gray-500">
+                <span id="modal-duration"></span>
+                <span id="modal-date"></span>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Course Content -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -256,5 +343,59 @@
                 document.getElementById('similar-courses').innerHTML = '<p class="text-gray-600">Unable to load similar courses.</p>';
             });
     });
+
+    function playVideo(videoId) {
+        // Get video data (in real app, fetch from API)
+        // For demo, we'll use sample data
+        const videoData = {
+            title: 'Sample Video',
+            description: 'This is a sample video description.',
+            video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            duration_formatted: '10:30',
+            created_at: 'Today'
+        };
+        
+        // Update modal content
+        document.getElementById('modal-title').textContent = videoData.title;
+        document.getElementById('modal-description').textContent = videoData.description;
+        document.getElementById('modal-duration').textContent = videoData.duration_formatted;
+        document.getElementById('modal-date').textContent = videoData.created_at;
+        
+        // Create video player
+        const videoPlayer = document.getElementById('video-player');
+        videoPlayer.innerHTML = `
+            <video controls autoplay class="w-full h-full rounded-lg">
+                <source src="${videoData.video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+        
+        // Show modal
+        document.getElementById('video-modal').classList.remove('hidden');
+        document.getElementById('video-modal').classList.add('flex');
+    }
+    
+    function closeVideoModal() {
+        document.getElementById('video-modal').classList.add('hidden');
+        document.getElementById('video-modal').classList.remove('flex');
+        
+        // Stop video playback
+        const video = document.querySelector('#video-player video');
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+        }
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeVideoModal();
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('video-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeVideoModal();
+    });
+
 </script>
 {% endblock %}

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Video - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li>
+                    <a href="/courses" class="text-gray-700 hover:text-purple-600">Courses</a>
+                </li>
+                <li>
+                    <span class="mx-2">/</span>
+                </li>
+                <li>
+                    <a href="/courses/{{ course.id }}" class="text-gray-700 hover:text-purple-600">{{ course.title|truncatechars:30 }}</a>
+                </li>
+                <li>
+                    <span class="mx-2">/</span>
+                </li>
+                <li class="text-purple-600 font-medium">Upload Video</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Upload Video Lecture</h1>
+        <p class="text-gray-600 mb-8">Add a new video to "{{ course.title }}"</p>
+        
+        <form id="upload-video-form" enctype="multipart/form-data">
+            <!-- Video Details -->
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Video Details</h2>
+                
+                <div class="mb-6">
+                    <label for="title" class="block text-gray-700 font-medium mb-2">Video Title *</label>
+                    <input type="text" id="title" name="title" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                           placeholder="e.g., Introduction to Python" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="description" class="block text-gray-700 font-medium mb-2">Description</label>
+                    <textarea id="description" name="description" rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                              placeholder="What will students learn in this video?"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="order" class="block text-gray-700 font-medium mb-2">Order Number</label>
+                        <input type="number" id="order" name="order" min="0" value="0"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        <p class="text-sm text-gray-500 mt-1">Controls display order (0 = first)</p>
+                    </div>
+                    
+                    <div>
+                        <label for="duration_seconds" class="block text-gray-700 font-medium mb-2">Duration (seconds)</label>
+                        <input type="number" id="duration_seconds" name="duration_seconds" min="0"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                               placeholder="e.g., 600 for 10 minutes">
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="is_preview" class="h-5 w-5 text-purple-600">
+                        <label for="is_preview" class="ml-2 text-gray-700">
+                            Make this a preview video (available to non-enrolled users)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Video Source -->
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Video Source</h2>
+                
+                <div class="mb-6">
+                    <div class="flex space-x-4 mb-4">
+                        <button type="button" id="tab-upload" class="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium">
+                            <i class="fas fa-upload mr-2"></i> Upload File
+                        </button>
+                        <button type="button" id="tab-url" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium">
+                            <i class="fas fa-link mr-2"></i> Video URL
+                        </button>
+                    </div>
+                    
+                    <!-- File Upload Section -->
+                    <div id="upload-section" class="p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                        <div class="text-center">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-600 mb-2">Drag & drop your video file here</p>
+                            <p class="text-sm text-gray-500 mb-4">or</p>
+                            <input type="file" id="video_file" name="video_file" 
+                                   accept="video/*" class="hidden">
+                            <label for="video_file" class="inline-block bg-gray-100 text-gray-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-gray-200">
+                                <i class="fas fa-folder-open mr-2"></i> Browse Files
+                            </label>
+                            <p class="text-sm text-gray-500 mt-4">Supported: MP4, WebM, MOV (Max 500MB)</p>
+                        </div>
+                        <div id="file-info" class="mt-4 hidden">
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p id="file-name" class="font-medium text-green-800"></p>
+                                        <p id="file-size" class="text-sm text-green-600"></p>
+                                    </div>
+                                    <button type="button" onclick="clearFile()" class="text-red-500 hover:text-red-700">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Section -->
+                    <div id="url-section" class="p-6 border-2 border-gray-200 rounded-lg hidden">
+                        <label for="video_url" class="block text-gray-700 font-medium mb-2">YouTube/Vimeo URL</label>
+                        <input type="url" id="video_url" name="video_url"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                               placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
+                        <p class="text-sm text-gray-500 mt-2">Paste a public video URL from YouTube or Vimeo</p>
+                    </div>
+                </div>
+                
+                <!-- Thumbnail -->
+                <div class="mb-6">
+                    <label for="thumbnail" class="block text-gray-700 font-medium mb-2">Thumbnail (Optional)</label>
+                    <input type="file" id="thumbnail" name="thumbnail" accept="image/*"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    <p class="text-sm text-gray-500 mt-1">Custom thumbnail image for the video</p>
+                </div>
+            </div>
+            
+            <!-- Submit -->
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="window.history.back()" 
+                        class="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700">
+                    <i class="fas fa-save mr-2"></i> Upload Video
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    document.getElementById('tab-upload').addEventListener('click', function() {
+        document.getElementById('tab-upload').classList.replace('bg-gray-200', 'bg-purple-600');
+        document.getElementById('tab-upload').classList.replace('text-gray-700', 'text-white');
+        document.getElementById('tab-url').classList.replace('bg-purple-600', 'bg-gray-200');
+        document.getElementById('tab-url').classList.replace('text-white', 'text-gray-700');
+        document.getElementById('upload-section').classList.remove('hidden');
+        document.getElementById('url-section').classList.add('hidden');
+    });
+    
+    document.getElementById('tab-url').addEventListener('click', function() {
+        document.getElementById('tab-url').classList.replace('bg-gray-200', 'bg-purple-600');
+        document.getElementById('tab-url').classList.replace('text-gray-700', 'text-white');
+        document.getElementById('tab-upload').classList.replace('bg-purple-600', 'bg-gray-200');
+        document.getElementById('tab-upload').classList.replace('text-white', 'text-gray-700');
+        document.getElementById('url-section').classList.remove('hidden');
+        document.getElementById('upload-section').classList.add('hidden');
+    });
+    
+    // File upload handling
+    document.getElementById('video_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = formatFileSize(file.size);
+            document.getElementById('file-info').classList.remove('hidden');
+        }
+    });
+    
+    function clearFile() {
+        document.getElementById('video_file').value = '';
+        document.getElementById('file-info').classList.add('hidden');
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes >= 1024**3) return (bytes / 1024**3).toFixed(1) + ' GB';
+        if (bytes >= 1024**2) return (bytes / 1024**2).toFixed(1) + ' MB';
+        if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return bytes + ' bytes';
+    }
+    
+    // Form submission
+    document.getElementById('upload-video-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to upload videos.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('title', document.getElementById('title').value);
+        formData.append('description', document.getElementById('description').value);
+        formData.append('order', document.getElementById('order').value);
+        formData.append('is_preview', document.getElementById('is_preview').checked);
+        
+        // Duration
+        const duration = document.getElementById('duration_seconds').value;
+        if (duration) formData.append('duration_seconds', duration);
+        
+        // Video source
+        const videoFile = document.getElementById('video_file').files[0];
+        const videoUrl = document.getElementById('video_url').value;
+        
+        if (videoFile) {
+            formData.append('video_file', videoFile);
+        } else if (videoUrl) {
+            formData.append('video_url', videoUrl);
+        } else {
+            alert('Please either upload a video file or provide a video URL.');
+            return;
+        }
+        
+        // Thumbnail
+        const thumbnail = document.getElementById('thumbnail').files[0];
+        if (thumbnail) formData.append('thumbnail', thumbnail);
+        
+        // Show loading
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...';
+        submitBtn.disabled = true;
+        
+        // Send request
+        fetch(`/api/v1/courses/{{ course.id }}/videos/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${token}`
+                // Note: Don't set Content-Type for FormData
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                return response.json().then(err => { throw err; });
+            }
+        })
+        .then(data => {
+            alert('Video uploaded successfully!');
+            window.location.href = `/courses/{{ course.id }}`;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMsg = error.detail || error.message || 'Failed to upload video';
+            alert(`Error: ${errorMsg}`);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}
