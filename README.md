@@ -1,13 +1,13 @@
-Arcade Backend
-Overview
+## Arcade Backend
 
+## Overview
 Arcade is a peer-to-peer learning platform that enables users to create, publish, and learn from courses developed by other users.
 It is built with Django and provides a solid backend foundation for an online learning management system.
 
 The platform allows learners to browse courses while administrators manage educational content through a secure admin interface.
 Arcade is designed to be simple, scalable, and extensible, making it suitable for future feature expansion.
 
-Planned Features
+## Planned Features
 
 User authentication and authorization
 
@@ -21,7 +21,7 @@ Comments and threaded replies
 
 Study groups and learning sessions
 
-Implemented Features
+## Implemented Features
 
 User authentication and authorization
 
@@ -33,7 +33,7 @@ Course listing displayed on the homepage
 
 SQLite database integration
 
-Tech Stack
+## Tech Stack
 
 Backend: Python, Django
 
@@ -43,7 +43,8 @@ Database: SQLite (development), PostgreSQL (planned for production)
 
 Version Control: Git & GitHub
 
-Project Structure
+## Project Structure
+
 arcade-backend/
 ├── backend/
 │   ├── accounts/     # Custom user model & authentication
@@ -58,7 +59,7 @@ arcade-backend/
 ├── README.md
 └── requirements.txt
 
-Project Status
+## Project Status
 
 This project is under active development.
 Some features are still in progress, and minor bugs may be present. These are expected as part of the development lifecycle.
