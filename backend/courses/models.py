@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
-
+from django.utils import timezone
 User = settings.AUTH_USER_MODEL
 
 class Course(models.Model):
@@ -97,8 +97,28 @@ class Course(models.Model):
         if self.tags:
             return [tag.strip() for tag in self.tags.split(',')]
         return []
-
-
+    def enroll_student(self, student):
+        """Enroll a student in this course"""
+        enrollment, created = Enrollment.objects.get_or_create(
+            student=student,
+            course=self,
+            defaults={'enrolled_at': timezone.now()}
+        )
+        return enrollment, created
+    
+    def is_student_enrolled(self, student):
+        """Check if student is enrolled"""
+        if not student or not student.is_authenticated:
+            return False
+        return self.course_enrollments.filter(student=student).exists()
+    
+    def get_student_enrollment(self, student):
+        """Get enrollment for a specific student"""
+        try:
+            return self.course_enrollments.get(student=student)
+        except Enrollment.DoesNotExist:
+            return None
+    
 class Video(models.Model):
     course = models.ForeignKey(
         Course,
@@ -121,3 +141,63 @@ class Video(models.Model):
     
     def __str__(self):
         return f"{self.course.title} - {self.title}"
+
+class Enrollment(models.Model):
+    """Track student enrollments in courses"""
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='enrollments'
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='course_enrollments'
+    )
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Progress tracking
+    progress_percentage = models.FloatField(default=0.0)
+    last_accessed_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['student', 'course']
+        ordering = ['-enrolled_at']
+    
+    def __str__(self):
+        return f"{self.student.username} - {self.course.title}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-update course student count
+        if not self.pk:  # New enrollment
+            super().save(*args, **kwargs)
+            self.course.total_students = self.course.course_enrollments.count()
+            self.course.save()
+        else:
+            super().save(*args, **kwargs)
+
+
+class CourseProgress(models.Model):
+    """Track progress through individual course lectures"""
+    enrollment = models.ForeignKey(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name='progress'
+    )
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name='student_progress'
+    )
+    completed = models.BooleanField(default=False)
+    watched_duration = models.IntegerField(default=0)  # Seconds watched
+    total_duration = models.IntegerField(default=0)    # Video duration in seconds
+    last_watched_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['enrollment', 'video']
+    
+    def __str__(self):
+        return f"{self.enrollment.student.username} - {self.video.title}"

@@ -1,0 +1,80 @@
+from rest_framework import serializers
+from .models import Course, Video
+from accounts.serializers import UserSerializer 
+
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Video
+        fields = ['id', 'title', 'video_file', 'order', 'uploaded_at']
+
+class CourseSerializer(serializers.ModelSerializer):
+    videos = VideoSerializer(many=True, read_only=True)
+    creator_name = serializers.CharField(source='creator.username', read_only=True)
+    is_enrolled = serializers.SerializerMethodField()
+    enrollment_id = serializers.SerializerMethodField() 
+    class Meta:
+        model = Course
+        fields = [
+            'id', 'title', 'description', 'creator', 'creator_name',
+            'is_paid', 'price', 'is_approved', 'created_at',
+            'short_description', 'level', 'category', 'tags', 'status', 'videos'
+        ]
+        read_only_fields = ['creator']
+    def get_is_enrolled(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.course_enrollments.filter(student=request.user).exists()
+        return False
+    
+    def get_enrollment_id(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            enrollment = obj.course_enrollments.filter(student=request.user).first()
+            return enrollment.id if enrollment else None
+        return None
+
+
+class CourseCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['title', 'description', 'is_paid', 'price']
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+    course = CourseSerializer(read_only=True)
+    
+    class Meta:
+        model = Enrollment
+        fields = [
+            'id', 'student', 'course', 'enrolled_at',
+            'completed', 'completed_at', 'progress_percentage',
+            'last_accessed_at'
+        ]
+        read_only_fields = ['student', 'course', 'enrolled_at']
+
+
+class CourseProgressSerializer(serializers.ModelSerializer):
+    video = VideoSerializer(read_only=True)
+    
+    class Meta:
+        model = CourseProgress
+        fields = [
+            'id', 'video', 'completed', 'watched_duration',
+            'total_duration', 'last_watched_at'
+        ]
+
+
+class EnrollRequestSerializer(serializers.Serializer):
+    """Serializer for enrollment requests"""
+    course_id = serializers.IntegerField(required=True)
+    
+    def validate_course_id(self, value):
+        try:
+            course = Course.objects.get(pk=value)
+            if course.status != 'published' or not course.is_approved:
+                raise serializers.ValidationError("Course is not available for enrollment")
+            return value
+        except Course.DoesNotExist:
+            raise serializers.ValidationError("Course does not exist")
+
+

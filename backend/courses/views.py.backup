@@ -1,0 +1,158 @@
+from rest_framework import generics, permissions
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Course
+from .serializers import CourseSerializer, CourseCreateSerializer
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import TemplateView
+from .models import Enrollment, CourseProgress
+from .serializers import EnrollmentSerializer, EnrollRequestSerializer, CourseProgressSerializer
+
+
+class CourseListView(generics.ListCreateAPIView):
+    """List all courses or create new course"""
+    queryset = Course.objects.all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CourseCreateSerializer
+        return CourseSerializer
+    
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+    
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
+class CourseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a course"""
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    
+    def get_permissions(self):
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+
+@api_view(['GET'])
+def course_list_api(request):
+    """Legacy API endpoint"""
+    courses = Course.objects.all()
+    serializer = CourseSerializer(courses, many=True)
+    return Response(serializer.data)
+
+
+class HomeView(TemplateView):
+    template_name = 'home.html'
+
+def course_list_html(request):
+    """HTML view for course listing"""
+    return render(request, 'courses/list.html')
+
+def course_detail_html(request, pk):
+    """HTML view for single course"""
+    course = get_object_or_404(Course, pk=pk)
+    context = {
+        'course': course,
+        'videos': course.videos.all().order_by('order')
+    }
+    return render(request, 'courses/detail.html', context)
+
+def create_course_html(request):
+    """HTML view for creating a course"""
+    return render(request, 'courses/create.html')
+
+class EnrollmentListView(generics.ListAPIView):
+    """Get all enrollments for current user"""
+    serializer_class = EnrollmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Enrollment.objects.filter(student=self.request.user)
+
+
+class CourseEnrollmentView(generics.CreateAPIView):
+    """Enroll in a specific course"""
+    serializer_class = EnrollmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        course_id = kwargs.get('pk')
+        course = get_object_or_404(Course, pk=course_id)
+        
+        # Check if already enrolled
+        if Enrollment.objects.filter(student=request.user, course=course).exists():
+            return Response(
+                {'error': 'Already enrolled in this course'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check course availability
+        if course.status != 'published' or not course.is_approved:
+            return Response(
+                {'error': 'Course is not available for enrollment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if paid course
+        if course.is_paid and course.price > 0:
+            # For now, we'll allow enrollment without payment
+            # TODO: Integrate payment system
+            pass
+        
+        # Create enrollment
+        enrollment = Enrollment.objects.create(
+            student=request.user,
+            course=course
+        )
+        
+        serializer = self.get_serializer(enrollment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class EnrollmentDetailView(generics.RetrieveUpdateAPIView):
+    """Get or update enrollment details"""
+    serializer_class = EnrollmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Enrollment.objects.filter(student=self.request.user)
+
+
+class CourseProgressView(generics.ListCreateAPIView):
+    """Track progress in a course"""
+    serializer_class = CourseProgressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        enrollment = get_object_or_404(
+            Enrollment,
+            pk=self.kwargs['enrollment_id'],
+            student=self.request.user
+        )
+        return CourseProgress.objects.filter(enrollment=enrollment)
+    
+    def perform_create(self, serializer):
+        enrollment = get_object_or_404(
+            Enrollment,
+            pk=self.kwargs['enrollment_id'],
+            student=self.request.user
+        )
+        serializer.save(enrollment=enrollment)
+
+
+class MyEnrolledCoursesView(generics.ListAPIView):
+    """Get courses where user is enrolled"""
+    serializer_class = CourseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        enrolled_course_ids = Enrollment.objects.filter(
+            student=self.request.user
+        ).values_list('course_id', flat=True)
+        return Course.objects.filter(id__in=enrolled_course_ids)
+
+
