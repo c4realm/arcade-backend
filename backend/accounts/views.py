@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import logout
 from .serializers import UserSerializer, AuthTokenSerializer
+from django.views.generic import TemplateView
+
 
 # Create your views here.
 #creating a authentication views
@@ -55,3 +57,13 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return authenticated user"""
         return self.request.user
+
+
+class LoginViewHTML(TemplateView):
+    template_name = 'accounts/login.html'
+
+class RegisterViewHTML(TemplateView):
+    template_name = 'accounts/register.html'
+
+class DashboardView(TemplateView):
+    template_name = 'accounts/dashboard.html'

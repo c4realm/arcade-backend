@@ -18,11 +18,23 @@ from django.contrib import admin
 from django.urls import path, include 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
+from courses.views import HomeView, course_list_html, course_detail_html, create_course_html
+from accounts.views import LoginViewHTML, RegisterViewHTML, DashboardView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('courses.urls')),
     path('api/v1/auth/', include('accounts.urls')),
+     # HTML Views
+    path('', HomeView.as_view(), name='home'),
+    path('courses/', course_list_html, name='courses-html'),
+    path('courses/create/', create_course_html, name='create-course-html'),
+    path('courses/<int:pk>/', course_detail_html, name='course-detail-html'),
+    path('login/', LoginViewHTML.as_view(), name='login-html'),
+    path('register/', RegisterViewHTML.as_view(), name='register-html'),
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
 ]
 
 # For serving media files during development

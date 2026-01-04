@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Arcade - Learn Together{% endblock %}</title>
+    
+    <!-- Tailwind CSS for quick styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-gamepad text-2xl text-purple-600"></i>
+                    <a href="/" class="text-xl font-bold text-gray-800">Arcade</a>
+                    <span class="text-sm text-gray-500">| Peer to Peer Learning</span>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-gray-700 hover:text-purple-600">
+                        <i class="fas fa-home mr-1"></i> Home
+                    </a>
+                    <a href="/courses" class="text-gray-700 hover:text-purple-600">
+                        <i class="fas fa-book mr-1"></i> Courses
+                    </a>
+                    
+                    <!-- User Menu (will be dynamic) -->
+                    <div id="auth-buttons">
+                        <a href="/login" class="text-gray-700 hover:text-purple-600">
+                            <i class="fas fa-sign-in-alt mr-1"></i> Login
+                        </a>
+                        <a href="/register" class="ml-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-user-plus mr-1"></i> Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages/Notifications -->
+    {% if messages %}
+    <div class="container mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-gamepad text-2xl text-purple-400"></i>
+                        <span class="text-xl font-bold">Arcade</span>
+                    </div>
+                    <p class="text-gray-400">Learn, Teach, Grow Together</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400">
+                <p>&copy; 2024 Arcade Learning Platform. Built with Django & Tailwind CSS.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for dynamic features -->
+    <script>
+        // Simple function to show/hide auth buttons based on login status
+        function updateAuthButtons() {
+            const token = localStorage.getItem('token');
+            const authButtons = document.getElementById('auth-buttons');
+            
+            if (token) {
+                // User is logged in - show profile/dashboard
+                authButtons.innerHTML = `
+                    <a href="/dashboard" class="text-gray-700 hover:text-purple-600 mr-4">
+                        <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </button>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+        
+        // Check auth status on page load
+        document.addEventListener('DOMContentLoaded', updateAuthButtons);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Courses - Arcade{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Explore Courses</h1>
+            <p class="text-gray-600">Learn from top instructors in our community</p>
+        </div>
+        
+        <div class="mt-4 md:mt-0">
+            <a href="/courses/create" 
+               class="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i> Create Course
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+        <div class="flex flex-wrap gap-4">
+            <select id="category-filter" class="px-4 py-2 border rounded-lg">
+                <option value="">All Categories</option>
+                <option value="programming">Programming</option>
+                <option value="design">Design</option>
+                <option value="business">Business</option>
+            </select>
+            
+            <select id="level-filter" class="px-4 py-2 border rounded-lg">
+                <option value="">All Levels</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+            
+            <select id="price-filter" class="px-4 py-2 border rounded-lg">
+                <option value="">All Prices</option>
+                <option value="free">Free Only</option>
+                <option value="paid">Paid Only</option>
+            </select>
+            
+            <button onclick="applyFilters()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                <i class="fas fa-filter mr-2"></i> Apply Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Courses Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="courses-grid">
+    <!-- Courses loaded dynamically -->
+    <div class="col-span-3 text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading courses...</p>
+    </div>
+</div>
+
+<!-- Load More Button -->
+<div class="text-center mt-8" id="load-more-container" style="display: none;">
+    <button onclick="loadMoreCourses()" 
+            class="px-8 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+        <i class="fas fa-sync-alt mr-2"></i> Load More Courses
+    </button>
+</div>
+
+<!-- No Courses Message Template -->
+<div id="no-courses-template" style="display: none;">
+    <div class="col-span-3 text-center py-12">
+        <i class="fas fa-book-open text-5xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600">No courses found</h3>
+        <p class="text-gray-500 mt-2">Try adjusting your filters or be the first to create a course!</p>
+        <a href="/courses/create" class="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+            Create Course
+        </a>
+    </div>
+</div>
+
+<script>
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMore = true;
+    let currentFilters = {};
+    
+    // Load courses on page load
+    document.addEventListener('DOMContentLoaded', loadCourses);
+    
+    function loadCourses(page = 1, filters = {}) {
+        if (isLoading) return;
+        
+        isLoading = true;
+        const grid = document.getElementById('courses-grid');
+        
+        // Show loading for first page
+        if (page === 1) {
+            grid.innerHTML = `
+                <div class="col-span-3 text-center py-12">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading courses...</p>
+                </div>
+            `;
+        }
+        
+        // Build query string from filters
+        const queryParams = new URLSearchParams(filters);
+        if (page > 1) queryParams.set('page', page);
+        
+        fetch(`/api/v1/courses/?${queryParams.toString()}`)
+            .then(response => response.json())
+            .then(courses => {
+                isLoading = false;
+                
+                // If first page, clear grid
+                if (page === 1) {
+                    grid.innerHTML = '';
+                }
+                
+                if (courses.length === 0) {
+                    if (page === 1) {
+                        const noCourses = document.getElementById('no-courses-template').cloneNode(true);
+                        noCourses.style.display = 'block';
+                        grid.appendChild(noCourses);
+                    }
+                    hasMore = false;
+                    document.getElementById('load-more-container').style.display = 'none';
+                    return;
+                }
+                
+                // Add courses to grid
+                courses.forEach(course => {
+                    const courseCard = document.createElement('div');
+                    courseCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow course-card';
+                    courseCard.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
+                                        ${course.is_paid ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                        ${course.is_paid ? `$${course.price || course.current_price}` : 'FREE'}
+                                    </span>
+                                    <span class="ml-2 inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        ${course.level || 'All Levels'}
+                                    </span>
+                                </div>
+                                ${course.is_featured ? '<span class="text-yellow-500"><i class="fas fa-star"></i></span>' : ''}
+                            </div>
+                            
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">${course.title}</h3>
+                            <p class="text-gray-600 mb-4 line-clamp-3">${course.short_description || course.description}</p>
+                            
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas fa-user text-purple-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm text-gray-600">${course.creator_name || 'Instructor'}</span>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <i class="fas fa-users mr-1"></i> ${course.total_students || 0}
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm">
+                                    <i class="fas fa-star text-yellow-500 mr-1"></i>
+                                    ${course.average_rating ? course.average_rating.toFixed(1) : 'New'}
+                                    <span class="text-gray-500 ml-1">(${course.rating_count || 0})</span>
+                                </div>
+                                <a href="/courses/${course.id}" 
+                                   class="text-purple-600 hover:text-purple-800 font-semibold">
+                                    View Details <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(courseCard);
+                });
+                
+                // Show/hide load more button
+                if (courses.length >= 9) { // Assuming 9 per page
+                    document.getElementById('load-more-container').style.display = 'block';
+                    currentPage = page;
+                    hasMore = true;
+                } else {
+                    document.getElementById('load-more-container').style.display = 'none';
+                    hasMore = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading courses:', error);
+                isLoading = false;
+                grid.innerHTML = `
+                    <div class="col-span-3 text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+                        <p class="text-red-600">Unable to load courses. Please try again later.</p>
+                        <button onclick="loadCourses(1, currentFilters)" class="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            });
+    }
+    
+    function applyFilters() {
+        const filters = {
+            category: document.getElementById('category-filter').value,
+            level: document.getElementById('level-filter').value,
+            price: document.getElementById('price-filter').value
+        };
+        
+        currentFilters = filters;
+        loadCourses(1, filters);
+    }
+    
+    function loadMoreCourses() {
+        if (!isLoading && hasMore) {
+            loadCourses(currentPage + 1, currentFilters);
+        }
+    }
+</script>
+{% endblock %}

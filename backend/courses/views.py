@@ -3,6 +3,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Course
 from .serializers import CourseSerializer, CourseCreateSerializer
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import TemplateView
+
 
 class CourseListView(generics.ListCreateAPIView):
     """List all courses or create new course"""
@@ -39,3 +42,26 @@ def course_list_api(request):
     courses = Course.objects.all()
     serializer = CourseSerializer(courses, many=True)
     return Response(serializer.data)
+
+
+class HomeView(TemplateView):
+    template_name = 'home.html'
+
+def course_list_html(request):
+    """HTML view for course listing"""
+    return render(request, 'courses/list.html')
+
+def course_detail_html(request, pk):
+    """HTML view for single course"""
+    course = get_object_or_404(Course, pk=pk)
+    context = {
+        'course': course,
+        'videos': course.videos.all().order_by('order')
+    }
+    return render(request, 'courses/detail.html', context)
+
+def create_course_html(request):
+    """HTML view for creating a course"""
+    return render(request, 'courses/create.html')
+
+
