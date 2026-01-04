@@ -19,15 +19,29 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
-from courses.views import HomeView, course_list_html, course_detail_html, create_course_html
-from accounts.views import LoginViewHTML, RegisterViewHTML, DashboardView
-
+from courses.views import (
+    HomeView, 
+    course_list_html, 
+    course_detail_html, 
+    create_course_html
+)
+from accounts.views import (
+    LoginViewHTML, 
+    RegisterViewHTML, 
+    DashboardView
+)
 
 urlpatterns = [
+        #the admin
+
     path('admin/', admin.site.urls),
+        #the api endpoints
+
     path('api/v1/', include('courses.urls')),
     path('api/v1/auth/', include('accounts.urls')),
-     # HTML Views
+    path('api/v1/', include('groups.urls')),
+
+     # HTML pages Views
     path('', HomeView.as_view(), name='home'),
     path('courses/', course_list_html, name='courses-html'),
     path('courses/create/', create_course_html, name='create-course-html'),
@@ -37,6 +51,8 @@ urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
 ]
 
+
 # For serving media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

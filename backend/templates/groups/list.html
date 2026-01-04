@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Groups - Arcade{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Study Groups</h1>
+                <p class="text-gray-600">Collaborate, learn, and grow together with peers</p>
+            </div>
+            
+            <div class="mt-4 md:mt-0">
+                <a href="/groups/create" 
+                   class="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i> Create Group
+                </a>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+            <div class="flex flex-wrap gap-4">
+                <select id="privacy-filter" class="px-4 py-2 border rounded-lg">
+                    <option value="">All Privacy</option>
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                    <option value="course">Course-based</option>
+                </select>
+                
+                <input type="text" id="search-filter" 
+                       class="px-4 py-2 border rounded-lg flex-grow"
+                       placeholder="Search groups...">
+                
+                <button onclick="applyFilters()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Groups Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="groups-grid">
+        <!-- Groups loaded dynamically -->
+        <div class="col-span-3 text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading study groups...</p>
+        </div>
+    </div>
+    
+    <!-- No Groups Template -->
+    <div id="no-groups-template" style="display: none;">
+        <div class="col-span-3 text-center py-12">
+            <i class="fas fa-users text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600">No study groups found</h3>
+            <p class="text-gray-500 mt-2">Be the first to create a study group!</p>
+            <a href="/groups/create" class="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                Create Group
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadGroups(filters = {}) {
+        const grid = document.getElementById('groups-grid');
+        
+        // Build query string
+        const queryParams = new URLSearchParams(filters);
+        
+        fetch(`/api/v1/groups/?${queryParams.toString()}`)
+            .then(response => response.json())
+            .then(groups => {
+                grid.innerHTML = '';
+                
+                if (groups.length === 0) {
+                    const noGroups = document.getElementById('no-groups-template').cloneNode(true);
+                    noGroups.style.display = 'block';
+                    grid.appendChild(noGroups);
+                    return;
+                }
+                
+                groups.forEach(group => {
+                    const groupCard = document.createElement('div');
+                    groupCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow';
+                    
+                    groupCard.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
+                                        ${group.privacy === 'public' ? 'bg-green-100 text-green-800' : 
+                                          group.privacy === 'private' ? 'bg-yellow-100 text-yellow-800' : 
+                                          'bg-blue-100 text-blue-800'}">
+                                        ${group.privacy}
+                                    </span>
+                                    ${group.course ? `
+                                        <span class="ml-2 inline-block px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            ${group.course.title}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <span class="text-sm text-gray-500">
+                                    <i class="fas fa-users mr-1"></i> ${group.member_count}/${group.max_members}
+                                </span>
+                            </div>
+                            
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">${group.name}</h3>
+                            <p class="text-gray-600 mb-4 line-clamp-3">${group.description}</p>
+                            
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas fa-user text-purple-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm text-gray-600">${group.creator.username}</span>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <i class="fas fa-comment mr-1"></i> ${group.message_count}
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <a href="/groups/${group.id}" 
+                                   class="text-purple-600 hover:text-purple-800 font-semibold">
+                                    View Group
+                                </a>
+                                
+                                ${group.is_member ? `
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                                        <i class="fas fa-check mr-1"></i> Member
+                                    </span>
+                                ` : group.can_join.can_join ? `
+                                    <button onclick="joinGroup(${group.id})" 
+                                            class="px-4 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                                        Join
+                                    </button>
+                                ` : `
+                                    <span class="text-sm text-gray-500">${group.can_join.message}</span>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(groupCard);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading groups:', error);
+                grid.innerHTML = `
+                    <div class="col-span-3 text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+                        <p class="text-red-600">Unable to load study groups. Please try again later.</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function applyFilters() {
+        const filters = {
+            privacy: document.getElementById('privacy-filter').value,
+            search: document.getElementById('search-filter').value
+        };
+        loadGroups(filters);
+    }
+    
+    function joinGroup(groupId) {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert('Please login to join a study group.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        fetch(`/api/v1/groups/${groupId}/join/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Successfully joined the study group!');
+                loadGroups(); // Reload groups
+            } else {
+                response.json().then(data => {
+                    alert(data.error || 'Failed to join group');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+    
+    // Load groups on page load
+    document.addEventListener('DOMContentLoaded', loadGroups);
+</script>
+{% endblock %}
